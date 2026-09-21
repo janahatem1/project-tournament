@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+
+    <record id="view_tournament_registration_list" model="ir.ui.view">
+        <field name="name">tournament.registration.list</field>
+        <field name="model">tournament.registration</field>
+
+        <field name="arch" type="xml">
+            <tree>
+                <field name="tournament_id"/>
+                <field name="team_id"/>
+                <field name="registration_date"/>
+                <field name="status"/>
+            </tree>
+        </field>
+    </record>
+
+
+
+
+    <record id="view_tournament_registration_form" model="ir.ui.view">
+        <field name="name">tournament.registration.form</field>
+        <field name="model">tournament.registration</field>
+
+        <field name="arch" type="xml">
+            <form>
+
+                <header>
+
+                    <button
+                        name="action_accept"
+                        string="Accept"
+                        type="object"
+                        class="btn-primary"
+                        invisible="status != 'pending'"
+                    />
+
+                    <button
+                        name="action_reject"
+                        string="Reject"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="status != 'pending'"
+                    />
+
+                    <button
+                        name="action_withdraw"
+                        string="Withdraw"
+                        type="object"
+                        invisible="status not in ['pending', 'accepted']"
+                    />
+
+                    <field
+                        name="status"
+                        widget="statusbar"
+                    />
+
+                </header>
+
+                <sheet>
+
+                    <group>
+                        <field name="tournament_id"/>
+                        <field name="team_id"/>
+                        <field name="registration_date"/>
+                        <field name="status"/>
+                    </group>
+
+                    <group string="Tournament Roster">
+
+                        <field name="roster_ids">
+
+                            <tree>
+                                <field name="full_name"/>
+                                <field name="gamer_tag"/>
+                                <field name="email"/>
+                            </tree>
+
+                        </field>
+
+                    </group>
+
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+
+
+
+    <record id="view_tournament_registration_search" model="ir.ui.view">
+        <field name="name">tournament.registration.search</field>
+        <field name="model">tournament.registration</field>
+
+        <field name="arch" type="xml">
+            <search>
+
+
+                <field name="tournament_id"/>
+
+
+                <field name="team_id"/>
+
+
+
+
+                <filter
+                    name="filter_pending"
+                    string="Pending"
+                    domain="[('status', '=', 'pending')]"
+                />
+
+                <filter
+                    name="filter_accepted"
+                    string="Accepted"
+                    domain="[('status', '=', 'accepted')]"
+                />
+
+                <filter
+                    name="filter_rejected"
+                    string="Rejected"
+                    domain="[('status', '=', 'rejected')]"
+                />
+
+                <filter
+                    name="filter_withdrawn"
+                    string="Withdrawn"
+                    domain="[('status', '=', 'withdrawn')]"
+                />
+
+
+
+
+                <group string="Group By">
+
+                    <filter
+                        name="group_tournament"
+                        string="Tournament"
+                        context="{'group_by': 'tournament_id'}"
+                    />
+
+                    <filter
+                        name="group_team"
+                        string="Team"
+                        context="{'group_by': 'team_id'}"
+                    />
+
+                </group>
+
+            </search>
+        </field>
+    </record>
+
+
+<record id="action_tournament_registration" model="ir.actions.act_window">
+    <field name="name">Registrations</field>
+    <field name="res_model">tournament.registration</field>
+    <field name="view_mode">tree,form</field>
+</record>
+</odoo>

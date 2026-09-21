@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_tournament_team,tournament.team access,model_tournament_team,,1,1,1,1
+access_tournament_player,tournament.player access,model_tournament_player,,1,1,1,1
+access_tournament_tournament,tournament.tournament access,model_tournament_tournament,,1,1,1,1
+access_tournament_registration,tournament.registration access,model_tournament_registration,,1,1,1,1
