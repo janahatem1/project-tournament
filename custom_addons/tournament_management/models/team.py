@@ -36,5 +36,14 @@ class TournamentTeam(models.Model):
                     'A team with this name already exists.'
                 )
 
+    @api.constrains('captain_id')
+    def _check_captain(self):
+        for record in self:
+            if record.captain_id:
+                if record.captain_id.team_id.id != record.id:
+                    raise ValidationError(
+                        'The captain must belong to this team.'
+                    )
+
 
 
