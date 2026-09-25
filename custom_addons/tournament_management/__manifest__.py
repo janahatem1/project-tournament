@@ -1,0 +1,20 @@
+{
+    'name': 'Tournament Management System',
+    'author': 'Jana Hatem ',
+    'license': 'LGPL-3',
+    'version': '18.0.1.0.0',
+    'summary': ' Tournament Management System',
+    'depends': ['base',
+                ],
+    'installable': True,
+    'application': True,
+    'data': [
+    'security/ir.model.access.csv',
+    'views/team_views.xml',
+    'views/player_views.xml',
+    'views/tournament_views.xml',
+    'views/registration_views.xml',
+    'views/menu_views.xml',
+    'data/ir_cron.xml',
+],
+}

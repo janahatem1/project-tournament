@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_tournament_root"
+              name="Tournaments"
+              web_icon="tournament_management,static/description/icon.png"
+              sequence="10"/>
+
+
+    <menuitem id="menu_tournament"
+              name="Tournaments"
+              parent="menu_tournament_root"
+              action="action_tournament_tournament"
+              sequence="1"/>
+
+    <menuitem id="menu_team"
+              name="Teams"
+              parent="menu_tournament_root"
+              action="action_tournament_team"
+              sequence="2"/>
+    <menuitem id="menu_player"
+              name="Players"
+              parent="menu_tournament_root"
+              action="action_tournament_player"
+              sequence="3"/>
+    <menuitem
+    id="menu_registration"
+    name="Registrations"
+    parent="menu_tournament_root"
+    action="action_tournament_registration"
+    sequence="4"
+        />
+</odoo>

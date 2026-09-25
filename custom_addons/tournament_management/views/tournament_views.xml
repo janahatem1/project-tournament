@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+
+    <record id="view_tournament_tournament_list" model="ir.ui.view">
+        <field name="name">tournament.tournament.list</field>
+        <field name="model">tournament.tournament</field>
+
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="game_title"/>
+                <field name="registration_opening"/>
+                <field name="registration_closing"/>
+                <field name="tournament_start"/>
+                <field name="max_teams"/>
+                <field name="status"/>
+                <field name="champion_id"/>
+            </list>
+        </field>
+    </record>
+
+
+
+
+    <record id="view_tournament_tournament_form" model="ir.ui.view">
+        <field name="name">tournament.tournament.form</field>
+        <field name="model">tournament.tournament</field>
+
+        <field name="arch" type="xml">
+            <form>
+
+                <header>
+
+                    <button
+                        name="action_open_registration"
+                        string="Open Registration"
+                        type="object"
+                        class="btn-primary"
+                        invisible="status != 'draft'"
+                    />
+
+                </header>
+
+                <sheet>
+
+                    <group>
+                        <field name="name"/>
+                        <field name="game_title"/>
+                        <field name="status"/>
+                        <field name="champion_id"/>
+                    </group>
+
+                    <group string="Registration">
+                        <field name="registration_opening"/>
+                        <field name="registration_closing"/>
+                    </group>
+
+                    <group string="Tournament">
+                        <field name="tournament_start"/>
+                        <field name="max_teams"/>
+                        <field name="max_players_per_team"/>
+                        <field name="match_duration"/>
+                    </group>
+
+                    <notebook>
+
+                        <page string="Registrations">
+
+                            <field name="registration_ids">
+
+                                <list>
+                                    <field name="team_id"/>
+                                    <field name="registration_date"/>
+                                    <field name="status"/>
+                                </list>
+
+                            </field>
+
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+
+
+
+    <record id="action_tournament_tournament" model="ir.actions.act_window">
+        <field name="name">Tournaments</field>
+        <field name="res_model">tournament.tournament</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

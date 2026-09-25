@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_team_tree" model="ir.ui.view">
+        <field name="name">tournament.team.tree</field>
+        <field name="model">tournament.team</field>
+        <field name="arch" type="xml">
+            <list string="Teams">
+                <field name="name"/>
+                <field name="captain_id"/>
+            </list>
+        </field>
+    </record>
+
+   <record id="view_tournament_team_form" model="ir.ui.view">
+    <field name="name">tournament.team.form</field>
+    <field name="model">tournament.team</field>
+
+    <field name="arch" type="xml">
+        <form>
+            <sheet>
+
+                <group>
+                    <field name="name"/>
+                    <field name="captain_id"/>
+                </group>
+
+                <notebook>
+                    <page string="Players">
+                        <field name="players">
+                            <list editable="bottom">
+                                <field name="full_name"/>
+                                <field name="gamer_tag"/>
+                                <field name="email"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+
+            </sheet>
+        </form>
+    </field>
+</record>
+
+    <record id="action_tournament_team" model="ir.actions.act_window">
+        <field name="name">Teams</field>
+        <field name="res_model">tournament.team</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
