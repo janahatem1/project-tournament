@@ -44,13 +44,7 @@ class TournamentRegistration(models.Model):
         domain="[('team_id', '=', team_id)]"
     )
 
-    _sql_constraints = [
-        (
-            'unique_tournament_team',
-            'unique(tournament_id, team_id)',
-            'This team has already registered for this tournament.'
-        )
-    ]
+
 
 
 
