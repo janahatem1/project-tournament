@@ -59,7 +59,7 @@
 
                     <group string="Tournament">
                         <field name="tournament_start"/>
-                        <field name="max_teams"/>
+                        <field name="max_teams" readonly="status != 'draft'"/>
                         <field name="max_players_per_team"/>
                         <field name="match_duration"/>
                     </group>

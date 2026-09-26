@@ -158,4 +158,11 @@ class Tournament(models.Model):
             tournament.status = 'registration_closed'
             tournament.registration_closing = fields.Datetime.now()
 
+    def write(self, vals):
+        for record in self:
+            if 'max_teams' in vals and record.status != 'draft':
+                raise UserError(
+                    'Maximum Teams can only be changed while the tournament is in Draft.'
+                )
 
+        return super().write(vals)
