@@ -11,7 +11,6 @@
     'data': [
     'security/ir.model.access.csv',
     'views/team_views.xml',
-    'views/player_views.xml',
     'views/tournament_views.xml',
     'views/registration_views.xml',
     'views/menu_views.xml',
