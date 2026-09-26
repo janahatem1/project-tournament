@@ -168,13 +168,21 @@ class TournamentRegistration(models.Model):
             record.status = 'withdrawn'
 
     def write(self, vals):
+        protected_fields = {
+            'tournament_id',
+            'team_id',
+            'registration_date',
+            'status',
+            'roster_ids',
+        }
 
         for record in self:
-
-            if record.tournament_id.status == 'registration_closed':
-
+            if (
+                    record.tournament_id.status == 'registration_closed'
+                    and protected_fields.intersection(vals)
+            ):
                 raise UserError(
-                    'Closed registrations cannot be modified.'
+                    'These registration fields cannot be modified after registration is closed.'
                 )
 
         return super().write(vals)
