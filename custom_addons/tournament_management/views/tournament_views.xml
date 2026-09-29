@@ -40,7 +40,13 @@
                         class="btn-primary"
                         invisible="status != 'draft'"
                     />
-
+                    <button
+                       name="action_generate_matches"
+                       string="Generate Matches"
+                       type="object"
+                       class="btn-primary"
+                       invisible="status != 'registration_closed'"
+                    />
                 </header>
 
                 <sheet>

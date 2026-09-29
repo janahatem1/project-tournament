@@ -1,7 +1,7 @@
 
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
-
+import random
 
 class Tournament(models.Model):
     _name = 'tournament.tournament'
@@ -166,3 +166,63 @@ class Tournament(models.Model):
                 )
 
         return super().write(vals)
+
+    def action_generate_matches(self):
+      for tournament in self:
+
+
+        if tournament.status != 'registration_closed':
+            raise UserError(
+                'Matches can only be generated when registration is closed.'
+            )
+
+
+        existing_round_one = self.env['tournament.match'].search_count([
+            ('tournament_id', '=', tournament.id),
+            ('round_number', '=', 1),
+        ])
+
+        if existing_round_one:
+            raise UserError(
+                'Round 1 has already been generated for this tournament.'
+            )
+
+
+        accepted_registrations = self.env['tournament.registration'].search([
+            ('tournament_id', '=', tournament.id),
+            ('status', '=', 'accepted'),
+        ])
+
+
+        if len(accepted_registrations) != int(tournament.max_teams):
+            raise UserError(
+                'The number of accepted teams must equal the tournament maximum teams.'
+            )
+
+
+        teams = accepted_registrations.mapped('team_id')
+
+
+        if len(teams) != int(tournament.max_teams):
+            raise UserError(
+                'Each accepted registration must belong to a unique team.'
+            )
+
+
+        teams = list(teams)
+        random.shuffle(teams)
+
+
+        for index in range(0, len(teams), 2):
+            team_a = teams[index]
+            team_b = teams[index + 1]
+
+            self.env['tournament.match'].create({
+                'tournament_id': tournament.id,
+                'round_number': 1,
+                'team_a_id': team_a.id,
+                'team_b_id': team_b.id,
+                'status': 'scheduled',
+            })
+
+        return True

@@ -37,8 +37,8 @@ class TournamentMatch(models.Model):
     )
 
     scheduled_date = fields.Datetime(
-        string='Scheduled Date & Time',
-        required=True
+        string='Scheduled Date & Time'
+
     )
 
     team_a_score = fields.Integer(
