@@ -47,6 +47,13 @@
                        class="btn-primary"
                        invisible="status != 'registration_closed'"
                     />
+                    <button
+                            name="action_start_tournament"
+                            string="Start Tournament"
+                            type="object"
+                            class="btn-primary"
+                            invisible="status != 'registration_closed'"
+                     />
                 </header>
 
                 <sheet>

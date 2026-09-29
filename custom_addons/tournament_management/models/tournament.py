@@ -222,7 +222,33 @@ class Tournament(models.Model):
                 'round_number': 1,
                 'team_a_id': team_a.id,
                 'team_b_id': team_b.id,
+                'scheduled_date': tournament.tournament_start,
                 'status': 'scheduled',
             })
 
         return True
+
+      def action_start_tournament(self):
+          for tournament in self:
+
+
+              if tournament.status != 'registration_closed':
+                  raise UserError(
+                      'The tournament can only start when registration is closed.'
+                  )
+
+
+              round_one_count = self.env['tournament.match'].search_count([
+                  ('tournament_id', '=', tournament.id),
+                  ('round_number', '=', 1),
+              ])
+
+              if round_one_count == 0:
+                  raise UserError(
+                      'The tournament cannot start until Round 1 has been generated.'
+                  )
+
+
+              tournament.status = 'in_progress'
+
+          return True
