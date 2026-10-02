@@ -1,7 +1,8 @@
-
+import random
+from datetime import timedelta
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
-import random
+
 
 class Tournament(models.Model):
     _name = 'tournament.tournament'

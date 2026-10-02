@@ -4,6 +4,7 @@ from odoo.exceptions import ValidationError, UserError
 class TournamentMatch(models.Model):
     _name = 'tournament.match'
     _description = 'Tournament Match'
+    _inherit=['mail.thread']
     _order = 'scheduled_date, id'
 
     reference = fields.Char(

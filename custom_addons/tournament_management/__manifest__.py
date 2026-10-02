@@ -10,6 +10,7 @@
     'application': True,
     'data': [
     'security/ir.model.access.csv',
+        'data/sequence.xml'
     'views/team_views.xml',
     'views/tournament_views.xml',
     'views/registration_views.xml',
