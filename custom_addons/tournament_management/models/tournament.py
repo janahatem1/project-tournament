@@ -253,3 +253,87 @@ class Tournament(models.Model):
               tournament.status = 'in_progress'
 
           return True
+
+      def action_generate_next_round(self):
+          for tournament in self:
+
+
+              if tournament.champion_id:
+                  raise UserError(
+                      'The tournament is already finished.'
+                  )
+
+
+              matches = self.env['tournament.match'].search([
+                  ('tournament_id', '=', tournament.id)
+              ], order='round_number desc')
+
+              if not matches:
+                  raise UserError(
+                      'There are no matches in this tournament.'
+                  )
+
+              current_round = matches[0].round_number
+
+
+              current_matches = self.env['tournament.match'].search([
+                  ('tournament_id', '=', tournament.id),
+                  ('round_number', '=', current_round)
+              ])
+
+
+              winners = []
+
+              for match in current_matches:
+
+                  if match.status != 'finished':
+                      raise UserError(
+                          'All matches in the current round must be finished.'
+                      )
+
+                  if not match.winner_id:
+                      raise UserError(
+                          'Every match must have a winner.'
+                      )
+
+                  winners.append(match.winner_id)
+
+
+              next_round = current_round + 1
+
+              existing_matches = self.env['tournament.match'].search_count([
+                  ('tournament_id', '=', tournament.id),
+                  ('round_number', '=', next_round)
+              ])
+
+              if existing_matches:
+                  raise UserError(
+                      'The next round has already been generated.'
+                  )
+
+
+              random.shuffle(winners)
+
+
+              round_time = (
+                      tournament.tournament_start
+                      + timedelta(
+                  minutes=current_round * tournament.match_duration
+              )
+              )
+
+
+              for i in range(0, len(winners), 2):
+                  team_a = winners[i]
+                  team_b = winners[i + 1]
+
+                  self.env['tournament.match'].create({
+                      'tournament_id': tournament.id,
+                      'round_number': next_round,
+                      'team_a_id': team_a.id,
+                      'team_b_id': team_b.id,
+                      'scheduled_date': round_time,
+                      'status': 'scheduled',
+                  })
+
+          return True
