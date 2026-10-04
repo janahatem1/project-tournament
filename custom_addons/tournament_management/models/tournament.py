@@ -79,7 +79,11 @@ class Tournament(models.Model):
         'tournament_id',
         string='Registrations'
     )
-
+    match_ids = fields.One2many(
+        'tournament.match',
+        'tournament_id',
+        string='Matches'
+    )
 
     @api.constrains('registration_closing', 'tournament_start')
     def _check_registration_dates(self):

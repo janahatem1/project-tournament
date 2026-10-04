@@ -99,7 +99,21 @@
                             </field>
 
                         </page>
-
+                            <page string="Matches">
+                              <field name="match_ids">
+                                 <list>
+                                    <field name="reference"/>
+                                    <field name="round_number"/>
+                                    <field name="team_a_id"/>
+                                    <field name="team_b_id"/>
+                                    <field name="scheduled_date"/>
+                                    <field name="team_a_score"/>
+                                    <field name="team_b_score"/>
+                                    <field name="winner_id"/>
+                                    <field name="status"/>
+                                 </list>
+                              </field>
+                            </page>
                     </notebook>
 
                 </sheet>

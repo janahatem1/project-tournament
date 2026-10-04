@@ -26,4 +26,11 @@
     action="action_tournament_registration"
     sequence="4"
         />
+
+    <menuitem
+    id="menu_tournament_match"
+    name="Matches"
+    action="action_tournament_match"
+    sequence="30"
+/>
 </odoo>
