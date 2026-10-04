@@ -152,30 +152,11 @@ def action_finish_match(self):
         match.status = 'finished'
 
 
-def write(self, vals):
-    for match in self:
+        final_matches = self.env['tournament.match'].search([
+            ('tournament_id', '=', match.tournament_id.id),
+            ('round_number', '=', match.round_number)
+        ])
 
-        if match.status == 'finished':
-
-            protected_fields = [
-                'team_a_id',
-                'team_b_id',
-                'team_a_score',
-                'team_b_score',
-                'winner_id',
-                'tournament_id',
-                'round_number',
-            ]
-
-            for field_name in protected_fields:
-                if field_name in vals:
-                    raise UserError(
-                        'You cannot change a finished match.'
-                    )
-
-            if 'status' in vals and vals['status'] != 'finished':
-                raise UserError(
-                    'A finished match cannot be started again.'
-                )
-
-    return super().write(vals)
+        if len(final_matches) == 1:
+            match.tournament_id.champion_id = match.winner_id
+            match.tournament_id.status = 'finished'
