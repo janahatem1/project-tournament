@@ -54,6 +54,13 @@
                             class="btn-primary"
                             invisible="status != 'registration_closed'"
                      />
+                    <button
+                             name="action_finish_tournament"
+                             string="Finish Tournament"
+                             type="object"
+                             class="btn-primary"
+                             invisible="status != 'in_progress'"
+                    />
                 </header>
 
                 <sheet>

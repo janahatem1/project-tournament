@@ -337,3 +337,58 @@ class Tournament(models.Model):
                   })
 
           return True
+
+      def action_finish_tournament(self):
+          for tournament in self:
+
+
+              if not tournament.champion_id:
+                  raise UserError(
+                      'The tournament cannot be finished without a champion.'
+                  )
+
+
+              matches = self.env['tournament.match'].search([
+                  ('tournament_id', '=', tournament.id)
+              ], order='round_number desc')
+
+              if not matches:
+                  raise UserError(
+                      'There are no matches in this tournament.'
+                  )
+
+              final_round = matches[0].round_number
+
+              final_matches = self.env['tournament.match'].search([
+                  ('tournament_id', '=', tournament.id),
+                  ('round_number', '=', final_round)
+              ])
+
+              if len(final_matches) != 1:
+                  raise UserError(
+                      'The final match has not been completed.'
+                  )
+
+              final_match = final_matches[0]
+
+
+              if final_match.status != 'finished':
+                  raise UserError(
+                      'The Final Match must be finished first.'
+                  )
+
+
+              all_matches = self.env['tournament.match'].search([
+                  ('tournament_id', '=', tournament.id)
+              ])
+
+              for match in all_matches:
+                  if match.status != 'finished':
+                      raise UserError(
+                          'All tournament matches must be finished.'
+                      )
+
+
+              tournament.status = 'finished'
+
+          return True
