@@ -7,6 +7,7 @@ from odoo.exceptions import ValidationError, UserError
 class Tournament(models.Model):
     _name = 'tournament.tournament'
     _description = 'Tournament'
+    _inherit = ['mail.thread']
 
     name = fields.Char(
         string='Tournament Name',
@@ -109,41 +110,28 @@ class Tournament(models.Model):
                     'Match Duration must be greater than 0.'
                 )
 
-
-
     def action_open_registration(self):
         for record in self:
-
             if record.status != 'draft':
                 raise UserError(
                     'Only draft tournaments can open registration.'
                 )
-
             record.status = 'registration_open'
             record.registration_opening = fields.Datetime.now()
-
-
+        return True
 
     @api.model
     def _check_registration_closing(self):
-
         now = fields.Datetime.now()
-
         tournaments = self.search([
             ('status', '=', 'registration_open')
         ])
-
         for tournament in tournaments:
-
             if tournament.registration_closing <= now:
                 tournament._close_registration()
 
-
-
     def _close_registration(self):
-
         for tournament in self:
-
             if tournament.status != 'registration_open':
                 continue
 
@@ -154,11 +142,9 @@ class Tournament(models.Model):
                 ('status', '=', 'pending')
             ])
 
-
             pending_registrations.write({
                 'status': 'rejected'
             })
-
 
             tournament.status = 'registration_closed'
             tournament.registration_closing = fields.Datetime.now()
@@ -169,230 +155,193 @@ class Tournament(models.Model):
                 raise UserError(
                     'Maximum Teams can only be changed while the tournament is in Draft.'
                 )
-
         return super().write(vals)
 
     def action_generate_matches(self):
-      for tournament in self:
+        for tournament in self:
+            if tournament.status != 'registration_closed':
+                raise UserError(
+                    'Matches can only be generated when registration is closed.'
+                )
 
+            existing_round_one = self.env['tournament.match'].search_count([
+                ('tournament_id', '=', tournament.id),
+                ('round_number', '=', 1),
+            ])
 
-        if tournament.status != 'registration_closed':
-            raise UserError(
-                'Matches can only be generated when registration is closed.'
-            )
+            if existing_round_one:
+                raise UserError(
+                    'Round 1 has already been generated for this tournament.'
+                )
 
+            accepted_registrations = self.env['tournament.registration'].search([
+                ('tournament_id', '=', tournament.id),
+                ('status', '=', 'accepted'),
+            ])
 
-        existing_round_one = self.env['tournament.match'].search_count([
-            ('tournament_id', '=', tournament.id),
-            ('round_number', '=', 1),
-        ])
+            if len(accepted_registrations) != int(tournament.max_teams):
+                raise UserError(
+                    'The number of accepted teams must equal the tournament maximum teams.'
+                )
 
-        if existing_round_one:
-            raise UserError(
-                'Round 1 has already been generated for this tournament.'
-            )
+            teams = accepted_registrations.mapped('team_id')
 
+            if len(teams) != int(tournament.max_teams):
+                raise UserError(
+                    'Each accepted registration must belong to a unique team.'
+                )
 
-        accepted_registrations = self.env['tournament.registration'].search([
-            ('tournament_id', '=', tournament.id),
-            ('status', '=', 'accepted'),
-        ])
+            teams = list(teams)
+            random.shuffle(teams)
 
+            for index in range(0, len(teams), 2):
+                team_a = teams[index]
+                team_b = teams[index + 1]
 
-        if len(accepted_registrations) != int(tournament.max_teams):
-            raise UserError(
-                'The number of accepted teams must equal the tournament maximum teams.'
-            )
-
-
-        teams = accepted_registrations.mapped('team_id')
-
-
-        if len(teams) != int(tournament.max_teams):
-            raise UserError(
-                'Each accepted registration must belong to a unique team.'
-            )
-
-
-        teams = list(teams)
-        random.shuffle(teams)
-
-
-        for index in range(0, len(teams), 2):
-            team_a = teams[index]
-            team_b = teams[index + 1]
-
-            self.env['tournament.match'].create({
-                'tournament_id': tournament.id,
-                'round_number': 1,
-                'team_a_id': team_a.id,
-                'team_b_id': team_b.id,
-                'scheduled_date': tournament.tournament_start,
-                'status': 'scheduled',
-            })
-
+                self.env['tournament.match'].create({
+                    'tournament_id': tournament.id,
+                    'round_number': 1,
+                    'team_a_id': team_a.id,
+                    'team_b_id': team_b.id,
+                    'scheduled_date': tournament.tournament_start,
+                    'status': 'scheduled',
+                })
         return True
 
-      def action_start_tournament(self):
-          for tournament in self:
+    def action_start_tournament(self):
+        for tournament in self:
+            if tournament.status != 'registration_closed':
+                raise UserError(
+                    'The tournament can only start when registration is closed.'
+                )
 
+            round_one_count = self.env['tournament.match'].search_count([
+                ('tournament_id', '=', tournament.id),
+                ('round_number', '=', 1),
+            ])
 
-              if tournament.status != 'registration_closed':
-                  raise UserError(
-                      'The tournament can only start when registration is closed.'
-                  )
+            if round_one_count == 0:
+                raise UserError(
+                    'The tournament cannot start until Round 1 has been generated.'
+                )
 
+            tournament.status = 'in_progress'
+        return True
 
-              round_one_count = self.env['tournament.match'].search_count([
-                  ('tournament_id', '=', tournament.id),
-                  ('round_number', '=', 1),
-              ])
+    def action_generate_next_round(self):
+        for tournament in self:
+            if tournament.champion_id:
+                raise UserError(
+                    'The tournament is already finished.'
+                )
 
-              if round_one_count == 0:
-                  raise UserError(
-                      'The tournament cannot start until Round 1 has been generated.'
-                  )
+            matches = self.env['tournament.match'].search([
+                ('tournament_id', '=', tournament.id)
+            ], order='round_number desc')
 
+            if not matches:
+                raise UserError(
+                    'There are no matches in this tournament.'
+                )
 
-              tournament.status = 'in_progress'
+            current_round = matches[0].round_number
 
-          return True
+            current_matches = self.env['tournament.match'].search([
+                ('tournament_id', '=', tournament.id),
+                ('round_number', '=', current_round)
+            ])
 
-      def action_generate_next_round(self):
-          for tournament in self:
+            winners = []
+            for match in current_matches:
+                if match.status != 'finished':
+                    raise UserError(
+                        'All matches in the current round must be finished.'
+                    )
 
+                if not match.winner_id:
+                    raise UserError(
+                        'Every match must have a winner.'
+                    )
 
-              if tournament.champion_id:
-                  raise UserError(
-                      'The tournament is already finished.'
-                  )
+                winners.append(match.winner_id)
 
+            next_round = current_round + 1
 
-              matches = self.env['tournament.match'].search([
-                  ('tournament_id', '=', tournament.id)
-              ], order='round_number desc')
+            existing_matches = self.env['tournament.match'].search_count([
+                ('tournament_id', '=', tournament.id),
+                ('round_number', '=', next_round)
+            ])
 
-              if not matches:
-                  raise UserError(
-                      'There are no matches in this tournament.'
-                  )
+            if existing_matches:
+                raise UserError(
+                    'The next round has already been generated.'
+                )
 
-              current_round = matches[0].round_number
+            random.shuffle(winners)
 
+            round_time = (
+                tournament.tournament_start
+                + timedelta(minutes=current_round * tournament.match_duration)
+            )
 
-              current_matches = self.env['tournament.match'].search([
-                  ('tournament_id', '=', tournament.id),
-                  ('round_number', '=', current_round)
-              ])
+            for i in range(0, len(winners), 2):
+                team_a = winners[i]
+                team_b = winners[i + 1]
 
+                self.env['tournament.match'].create({
+                    'tournament_id': tournament.id,
+                    'round_number': next_round,
+                    'team_a_id': team_a.id,
+                    'team_b_id': team_b.id,
+                    'scheduled_date': round_time,
+                    'status': 'scheduled',
+                })
+        return True
 
-              winners = []
+    def action_finish_tournament(self):
+        for tournament in self:
+            if not tournament.champion_id:
+                raise UserError(
+                    'The tournament cannot be finished without a champion.'
+                )
 
-              for match in current_matches:
+            matches = self.env['tournament.match'].search([
+                ('tournament_id', '=', tournament.id)
+            ], order='round_number desc')
 
-                  if match.status != 'finished':
-                      raise UserError(
-                          'All matches in the current round must be finished.'
-                      )
+            if not matches:
+                raise UserError(
+                    'There are no matches in this tournament.'
+                )
 
-                  if not match.winner_id:
-                      raise UserError(
-                          'Every match must have a winner.'
-                      )
+            final_round = matches[0].round_number
 
-                  winners.append(match.winner_id)
+            final_matches = self.env['tournament.match'].search([
+                ('tournament_id', '=', tournament.id),
+                ('round_number', '=', final_round)
+            ])
 
+            if len(final_matches) != 1:
+                raise UserError(
+                    'The final match has not been completed.'
+                )
 
-              next_round = current_round + 1
+            final_match = final_matches[0]
 
-              existing_matches = self.env['tournament.match'].search_count([
-                  ('tournament_id', '=', tournament.id),
-                  ('round_number', '=', next_round)
-              ])
+            if final_match.status != 'finished':
+                raise UserError(
+                    'The Final Match must be finished first.'
+                )
 
-              if existing_matches:
-                  raise UserError(
-                      'The next round has already been generated.'
-                  )
+            all_matches = self.env['tournament.match'].search([
+                ('tournament_id', '=', tournament.id)
+            ])
 
+            for match in all_matches:
+                if match.status != 'finished':
+                    raise UserError(
+                        'All tournament matches must be finished.'
+                    )
 
-              random.shuffle(winners)
-
-
-              round_time = (
-                      tournament.tournament_start
-                      + timedelta(
-                  minutes=current_round * tournament.match_duration
-              )
-              )
-
-
-              for i in range(0, len(winners), 2):
-                  team_a = winners[i]
-                  team_b = winners[i + 1]
-
-                  self.env['tournament.match'].create({
-                      'tournament_id': tournament.id,
-                      'round_number': next_round,
-                      'team_a_id': team_a.id,
-                      'team_b_id': team_b.id,
-                      'scheduled_date': round_time,
-                      'status': 'scheduled',
-                  })
-
-          return True
-
-      def action_finish_tournament(self):
-          for tournament in self:
-
-
-              if not tournament.champion_id:
-                  raise UserError(
-                      'The tournament cannot be finished without a champion.'
-                  )
-
-
-              matches = self.env['tournament.match'].search([
-                  ('tournament_id', '=', tournament.id)
-              ], order='round_number desc')
-
-              if not matches:
-                  raise UserError(
-                      'There are no matches in this tournament.'
-                  )
-
-              final_round = matches[0].round_number
-
-              final_matches = self.env['tournament.match'].search([
-                  ('tournament_id', '=', tournament.id),
-                  ('round_number', '=', final_round)
-              ])
-
-              if len(final_matches) != 1:
-                  raise UserError(
-                      'The final match has not been completed.'
-                  )
-
-              final_match = final_matches[0]
-
-
-              if final_match.status != 'finished':
-                  raise UserError(
-                      'The Final Match must be finished first.'
-                  )
-
-
-              all_matches = self.env['tournament.match'].search([
-                  ('tournament_id', '=', tournament.id)
-              ])
-
-              for match in all_matches:
-                  if match.status != 'finished':
-                      raise UserError(
-                          'All tournament matches must be finished.'
-                      )
-
-
-              tournament.status = 'finished'
-
-          return True
+            tournament.status = 'finished'
+        return True

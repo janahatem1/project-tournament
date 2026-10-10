@@ -1,149 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="view_tournament_match_list" model="ir.ui.view">
-    <field name="name">tournament.match.list</field>
-    <field name="model">tournament.match</field>
-    <field name="arch" type="xml">
+        <field name="name">tournament.match.list</field>
+        <field name="model">tournament.match</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="reference"/>
+                <field name="tournament_id"/>
+                <field name="round_number"/>
+                <field name="team_a_id"/>
+                <field name="team_b_id"/>
+                <field name="scheduled_date"/>
+                <field name="team_a_score"/>
+                <field name="team_b_score"/>
+                <field name="winner_id"/>
+                <field name="status"/>
+            </list>
+        </field>
+    </record>
 
-        <list>
-            <field name="reference"/>
-            <field name="tournament_id"/>
-            <field name="round_number"/>
-            <field name="team_a_id"/>
-            <field name="team_b_id"/>
-            <field name="scheduled_date"/>
-            <field name="team_a_score"/>
-            <field name="team_b_score"/>
-            <field name="winner_id"/>
-            <field name="status"/>
-        </list>
+    <record id="view_tournament_match_form" model="ir.ui.view">
+        <field name="name">tournament.match.form</field>
+        <field name="model">tournament.match</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button
+                        name="action_start_match"
+                        string="Start Match"
+                        type="object"
+                        class="btn-primary"
+                        invisible="status != 'scheduled'"
+                    />
+                    <button
+                        name="action_finish_match"
+                        string="Finish Match"
+                        type="object"
+                        class="btn-primary"
+                        invisible="status != 'in_progress'"
+                    />
+                    <field
+                        name="status"
+                        widget="statusbar"
+                        statusbar_visible="scheduled,in_progress,finished"
+                    />
+                </header>
 
-    </field>
-</record>
-<record id="view_tournament_match_form" model="ir.ui.view">
-    <field name="name">tournament.match.form</field>
-    <field name="model">tournament.match</field>
-    <field name="arch" type="xml">
-
-        <form>
-
-            <header>
-
-                <button
-                    name="action_start_match"
-                    string="Start Match"
-                    type="object"
-                    class="btn-primary"
-                    invisible="status != 'scheduled'"
-                />
-
-                <button
-                    name="action_finish_match"
-                    string="Finish Match"
-                    type="object"
-                    class="btn-primary"
-                    invisible="status != 'in_progress'"
-                />
-
-                <field
-                    name="status"
-                    widget="statusbar"
-                    statusbar_visible="scheduled,in_progress,finished"
-                />
-
-            </header>
-
-            <sheet>
-
-                <group>
+                <sheet>
                     <group>
-                        <field name="reference"/>
-                        <field name="tournament_id"/>
-                        <field name="round_number"/>
-                        <field name="scheduled_date"/>
-                    </group>
+                        <group>
+                            <field name="reference"/>
+                            <field name="tournament_id"/>
+                            <field name="round_number"/>
+                            <field name="scheduled_date"/>
+                        </group>
 
-                    <group>
-                        <field name="team_a_id"/>
-                        <field name="team_b_id"/>
-                        <field name="team_a_score"/>
-                        <field name="team_b_score"/>
-                        <field name="winner_id"/>
+                        <group>
+                            <field name="team_a_id"/>
+                            <field name="team_b_id"/>
+                            <field name="team_a_score"/>
+                            <field name="team_b_score"/>
+                            <field name="winner_id"/>
+                        </group>
                     </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tournament_match_search" model="ir.ui.view">
+        <field name="name">tournament.match.search</field>
+        <field name="model">tournament.match</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="reference"/>
+                <field name="tournament_id"/>
+                <field name="team_a_id"/>
+                <field name="team_b_id"/>
+                <field name="round_number"/>
+                <field name="status"/>
+
+                <separator/>
+
+                <filter
+                    name="scheduled"
+                    string="Scheduled"
+                    domain="[('status', '=', 'scheduled')]"
+                />
+                <filter
+                    name="in_progress"
+                    string="In Progress"
+                    domain="[('status', '=', 'in_progress')]"
+                />
+                <filter
+                    name="finished"
+                    string="Finished"
+                    domain="[('status', '=', 'finished')]"
+                />
+
+                <separator/>
+
+                <group expand="0" string="Group By">
+                    <filter
+                        name="group_round"
+                        string="Round"
+                        context="{'group_by': 'round_number'}"
+                    />
+                    <filter
+                        name="group_tournament"
+                        string="Tournament"
+                        context="{'group_by': 'tournament_id'}"
+                    />
+                    <filter
+                        name="group_status"
+                        string="Status"
+                        context="{'group_by': 'status'}"
+                    />
                 </group>
+            </search>
+        </field>
+    </record>
 
-            </sheet>
-
-        </form>
-
-    </field>
-</record>
-<record id="view_tournament_match_search" model="ir.ui.view">
-    <field name="name">tournament.match.search</field>
-    <field name="model">tournament.match</field>
-    <field name="arch" type="xml">
-
-        <search>
-
-            <field name="reference"/>
-            <field name="tournament_id"/>
-            <field name="team_a_id"/>
-            <field name="team_b_id"/>
-            <field name="round_number"/>
-            <field name="status"/>
-
-            <separator/>
-
-            <filter
-                name="scheduled"
-                string="Scheduled"
-                domain="[('status', '=', 'scheduled')]"
-            />
-
-            <filter
-                name="in_progress"
-                string="In Progress"
-                domain="[('status', '=', 'in_progress')]"
-            />
-
-            <filter
-                name="finished"
-                string="Finished"
-                domain="[('status', '=', 'finished')]"
-            />
-
-            <separator/>
-
-            <group expand="0" string="Group By">
-
-                <filter
-                    name="group_round"
-                    string="Round"
-                    context="{'group_by': 'round_number'}"
-                />
-
-                <filter
-                    name="group_tournament"
-                    string="Tournament"
-                    context="{'group_by': 'tournament_id'}"
-                />
-
-                <filter
-                    name="group_status"
-                    string="Status"
-                    context="{'group_by': 'status'}"
-                />
-
-            </group>
-
-        </search>
-
-    </field>
-</record>
     <record id="action_tournament_match" model="ir.actions.act_window">
-    <field name="name">Matches</field>
-    <field name="res_model">tournament.match</field>
-    <field name="view_mode">list,form</field>
-    <field name="search_view_id" ref="view_tournament_match_search"/>
-</record>
+        <field name="name">Matches</field>
+        <field name="res_model">tournament.match</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_tournament_match_search"/>
+    </record>
 </odoo>

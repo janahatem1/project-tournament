@@ -1,10 +1,11 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
 
+
 class TournamentMatch(models.Model):
     _name = 'tournament.match'
     _description = 'Tournament Match'
-    _inherit=['mail.thread']
+    _inherit = ['mail.thread']
     _order = 'scheduled_date, id'
 
     reference = fields.Char(
@@ -18,7 +19,6 @@ class TournamentMatch(models.Model):
         'tournament.tournament',
         string='Tournament',
         required=True
-
     )
 
     round_number = fields.Integer(
@@ -41,7 +41,6 @@ class TournamentMatch(models.Model):
 
     scheduled_date = fields.Datetime(
         string='Scheduled Date & Time'
-
     )
 
     team_a_score = fields.Integer(
@@ -71,92 +70,84 @@ class TournamentMatch(models.Model):
     )
 
     @api.model_create_multi
-
     def create(self, vals_list):
         for vals in vals_list:
-
             if vals.get('reference', 'New') == 'New':
                 vals['reference'] = self.env['ir.sequence'].next_by_code('tournament.match') or 'New'
         return super().create(vals_list)
 
+    @api.constrains('team_a_id', 'team_b_id')
+    def _check_teams(self):
+        for match in self:
+            if match.team_a_id == match.team_b_id:
+                raise ValidationError(
+                    'Team A and Team B cannot be the same team.'
+                )
 
-@api.constrains('team_a_id', 'team_b_id')
-def _check_teams(self):
-    for match in self:
-        if match.team_a_id == match.team_b_id:
-            raise ValidationError(
-                'Team A and Team B cannot be the same team.'
-            )
+    @api.constrains('tournament_id', 'team_a_id', 'team_b_id')
+    def _check_accepted_teams(self):
+        for match in self:
+            accepted_registrations = self.env[
+                'tournament.registration'
+            ].search([
+                ('tournament_id', '=', match.tournament_id.id),
+                ('status', '=', 'accepted'),
+            ])
 
+            accepted_teams = accepted_registrations.mapped('team_id')
 
-@api.constrains('tournament_id', 'team_a_id', 'team_b_id')
-def _check_accepted_teams(self):
-    for match in self:
-        accepted_registrations = self.env[
-            'tournament.registration'
-        ].search([
-            ('tournament_id', '=', match.tournament_id.id),
-            ('status', '=', 'accepted'),
-        ])
+            if match.team_a_id not in accepted_teams:
+                raise ValidationError(
+                    'Team A must be an accepted team in this tournament.'
+                )
 
-        accepted_teams = accepted_registrations.mapped('team_id')
+            if match.team_b_id not in accepted_teams:
+                raise ValidationError(
+                    'Team B must be an accepted team in this tournament.'
+                )
 
-        if match.team_a_id not in accepted_teams:
-            raise ValidationError(
-                'Team A must be an accepted team in this tournament.'
-            )
+    @api.constrains('team_a_score', 'team_b_score')
+    def _check_scores(self):
+        for match in self:
+            if match.team_a_score < 0 or match.team_b_score < 0:
+                raise ValidationError(
+                    'Scores cannot be negative.'
+                )
 
-        if match.team_b_id not in accepted_teams:
-            raise ValidationError(
-                'Team B must be an accepted team in this tournament.'
-            )
+    def action_start_match(self):
+        for match in self:
+            if match.status != 'scheduled':
+                raise UserError(
+                    'Only scheduled matches can be started.'
+                )
+            match.status = 'in_progress'
+        return True
 
+    def action_finish_match(self):
+        for match in self:
+            if match.status != 'in_progress':
+                raise UserError(
+                    'Only matches in progress can be finished.'
+                )
 
-@api.constrains('team_a_score', 'team_b_score')
-def _check_scores(self):
-    for match in self:
-        if match.team_a_score < 0 or match.team_b_score < 0:
-            raise ValidationError(
-                'Scores cannot be negative.'
-            )
+            if match.team_a_score == match.team_b_score:
+                raise UserError(
+                    'A match cannot end in a draw.'
+                )
 
+            if match.team_a_score > match.team_b_score:
+                match.winner_id = match.team_a_id
+            else:
+                match.winner_id = match.team_b_id
 
-def action_start_match(self):
-    for match in self:
-        if match.status != 'scheduled':
-            raise UserError(
-                'Only scheduled matches can be started.'
-            )
+            match.status = 'finished'
 
-        match.status = 'in_progress'
+            final_matches = self.env['tournament.match'].search([
+                ('tournament_id', '=', match.tournament_id.id),
+                ('round_number', '=', match.round_number)
+            ])
 
-
-def action_finish_match(self):
-    for match in self:
-
-        if match.status != 'in_progress':
-            raise UserError(
-                'Only matches in progress can be finished.'
-            )
-
-        if match.team_a_score == match.team_b_score:
-            raise UserError(
-                'A match cannot end in a draw.'
-            )
-
-        if match.team_a_score > match.team_b_score:
-            match.winner_id = match.team_a_id
-        else:
-            match.winner_id = match.team_b_id
-
-        match.status = 'finished'
-
-
-        final_matches = self.env['tournament.match'].search([
-            ('tournament_id', '=', match.tournament_id.id),
-            ('round_number', '=', match.round_number)
-        ])
-
-        if len(final_matches) == 1:
-            match.tournament_id.champion_id = match.winner_id
-            match.tournament_id.status = 'finished'
+            if len(final_matches) == 1:
+                match.tournament_id.champion_id = match.winner_id
+                match.tournament_id.status = 'finished'
+        return True

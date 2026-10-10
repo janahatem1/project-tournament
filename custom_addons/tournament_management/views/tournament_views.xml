@@ -48,6 +48,13 @@
                        invisible="status != 'registration_closed'"
                     />
                     <button
+                        name="action_generate_next_round"
+                       string="Generate Next Round"
+                       type="object"
+                       class="btn-primary"
+                       invisible="status != 'in_progress'"
+                    />
+                    <button
                             name="action_start_tournament"
                             string="Start Tournament"
                             type="object"
