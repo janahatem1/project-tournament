@@ -44,42 +44,34 @@ class TournamentRegistration(models.Model):
         domain="[('team_id', '=', team_id)]"
     )
 
-
-
-
-
     @api.model_create_multi
-    def create(self, vals):
-
-        tournament = self.env['tournament.tournament'].browse(
-            vals.get('tournament_id')
-        )
-
-        if tournament.status != 'registration_open':
-            raise UserError(
-                'You can only register a team when registration is open.'
+    def create(self, vals_list):
+        for vals in vals_list:
+            tournament = self.env['tournament.tournament'].browse(
+                vals.get('tournament_id')
             )
 
-        existing_registration = self.search_count([
-            ('tournament_id', '=', tournament.id),
-            ('team_id', '=', vals.get('team_id'))
-        ])
+            if tournament and tournament.status != 'registration_open':
+                raise UserError(
+                    'You can only register a team when registration is open.'
+                )
 
-        if existing_registration:
-            raise ValidationError(
-                'This team has already registered for this tournament.'
-            )
+            existing_registration = self.search_count([
+                ('tournament_id', '=', tournament.id),
+                ('team_id', '=', vals.get('team_id'))
+            ])
 
-        return super().create(vals)
+            if existing_registration:
+                raise UserError(
+                    'This team is already registered for this tournament.'
+                )
 
+        return super().create(vals_list)
 
-    @api.constrains('team_id', 'roster_ids')
+    @api.constrains('team_id', 'roster_ids', 'tournament_id')
     def _check_roster(self):
-
         for record in self:
-
             for player in record.roster_ids:
-
                 if player.team_id != record.team_id:
                     raise ValidationError(
                         'All roster players must belong to the selected team.'
@@ -87,28 +79,18 @@ class TournamentRegistration(models.Model):
 
             if (
                 record.tournament_id
-                and len(record.roster_ids)
-                > record.tournament_id.max_players_per_team
+                and len(record.roster_ids) > record.tournament_id.max_players_per_team
             ):
                 raise ValidationError(
                     'The tournament roster cannot exceed the maximum '
                     'players allowed per team.'
                 )
 
-
-
     def action_accept(self):
-
         for record in self:
-
             if record.status != 'pending':
                 raise UserError(
                     'Only pending registrations can be accepted.'
-                )
-
-            if record.tournament_id.status != 'registration_open':
-                raise UserError(
-                    'Registration is no longer open.'
                 )
 
             if not record.roster_ids:
@@ -125,30 +107,27 @@ class TournamentRegistration(models.Model):
 
             if accepted_count >= max_teams:
                 record.tournament_id._close_registration()
-
                 raise UserError(
                     'The maximum number of teams has already been reached.'
                 )
 
             record.status = 'accepted'
-
             accepted_count += 1
 
             if accepted_count >= max_teams:
                 record.tournament_id._close_registration()
 
-
+        return True
 
     def action_reject(self):
-
         for record in self:
-
             if record.status != 'pending':
                 raise UserError(
                     'Only pending registrations can be rejected.'
                 )
 
             record.status = 'rejected'
+        return True
 
 
     def action_withdraw(self):
