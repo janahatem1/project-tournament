@@ -149,5 +149,5 @@ class TournamentMatch(models.Model):
 
             if len(final_matches) == 1:
                 match.tournament_id.champion_id = match.winner_id
-                match.tournament_id.status = 'finished'
+
         return True
