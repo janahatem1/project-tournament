@@ -177,3 +177,25 @@ class TournamentRegistration(models.Model):
                 )
 
         return super().unlink()
+
+    def _write(self, vals):
+        protected_fields = [
+            'tournament_id',
+            'team_id',
+            'status',
+        ]
+        for registration in self:
+          if registration.tournament_id.status in [
+            'registration_closed',
+            'in_progress',
+            'finished',
+        ]:
+            for field_name in protected_fields:
+                if field_name in vals:
+                    raise UserError(
+                        'You cannot modify a registration '
+                        'after registration has closed.'
+                    )
+
+        return super().write(vals)
+
