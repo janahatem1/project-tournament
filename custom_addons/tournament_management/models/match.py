@@ -120,6 +120,10 @@ class TournamentMatch(models.Model):
                 raise UserError(
                     'Only scheduled matches can be started.'
                 )
+            if match.tournament_id.status != 'in-progress':
+                raise UserError(
+                    'The tournament must be In Progress before starting a match.'
+                )
             match.status = 'in_progress'
         return True
 
