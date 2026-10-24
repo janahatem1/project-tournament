@@ -16,7 +16,7 @@
                 <field name="tournament_start"/>
                 <field name="max_teams"/>
                 <field name="status"/>
-                <field name="champion_id"/>
+                <field name="champion_id" readonly="1"/>
             </list>
         </field>
     </record>

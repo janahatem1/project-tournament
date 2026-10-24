@@ -72,7 +72,8 @@ class Tournament(models.Model):
 
     champion_id = fields.Many2one(
         'tournament.team',
-        string='Champion'
+        string='Champion',
+        readonly=True
     )
 
     registration_ids = fields.One2many(
