@@ -151,3 +151,26 @@ class TournamentMatch(models.Model):
                 match.tournament_id.champion_id = match.winner_id
 
         return True
+
+    def write(self, vals):
+        protected_fields = [
+            'team_a_id',
+            'team_b_id',
+            'team_a_score',
+            'team_b_score',
+            'winner_id',
+            'tournament_id',
+            'round_number',
+            'scheduled_date',
+        ]
+
+        for match in self:
+            if match.status == 'finished':
+                for field_name in protected_fields:
+                    if field_name in vals:
+                        raise UserError(
+                            'You cannot change competition data '
+                            'after a match is finished.'
+                        )
+
+        return super().write(vals)
